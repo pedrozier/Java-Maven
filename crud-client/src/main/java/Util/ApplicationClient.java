@@ -5,12 +5,13 @@
 package Util;
 
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import model.MyUser;
-import model.Token;
+import Model.MyUser;
+import Model.Token;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -32,10 +33,8 @@ public class ApplicationClient {
 
     private Token token = new Token();
 
-    private String result = "...";
-    private List<MyUser> resultList = new ArrayList<>();
+    private String result;
     private int status;
-    private MyUser objResult;
 
     private static final String LOGIN_URL = "http://localhost:8080/login";
     private static final String HOME_URL = "http://localhost:8080/api/home/welcome";
@@ -96,12 +95,12 @@ public class ApplicationClient {
 
         status = response.getStatusLine().getStatusCode();
 
-        if (status == 201) {
-            String responsejson = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
-            result = gson.fromJson(responsejson, MyUser.class).toString();
+        if (status == 200) {
+            result = "SAVED";
+        } else if (status == 400) {
+            result = "NOT FOUND";
         } else if (status == 500) {
             result = "Login Expired";
-            throw new Exception();
         }
 
     }
@@ -124,15 +123,16 @@ public class ApplicationClient {
         status = response.getStatusLine().getStatusCode();
 
         if (status == 200) {
-            String responsejson = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
-            result = gson.fromJson(responsejson, MyUser.class).toString();
+            result = "UPDATED";
+        } else if (status == 400) {
+            result = "NOT FOUND";
         } else if (status == 500) {
             result = "Login Expired";
         }
 
     }
 
-    public void findByID(long id) throws Exception {
+    public MyUser findByID(long id) throws Exception {
 
         CloseableHttpClient client = HttpClientBuilder.create().build();
         HttpGet httpGet = new HttpGet(FIND_BY_ID_URL + id);
@@ -149,14 +149,16 @@ public class ApplicationClient {
 
         if (status == 200) {
             String responsejson = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
-            result = gson.fromJson(responsejson, MyUser.class).toString();
-            objResult = gson.fromJson(responsejson, MyUser.class);
+            return gson.fromJson(responsejson, MyUser.class);
         } else if (status == 500) {
             result = "Login Expired";
+        } else if (status == 400) {
+            result = "NOT FOUND";
         }
+        return null;
     }
 
-    public void findAll() throws Exception {
+    public List<MyUser> findAll() throws Exception {
 
         CloseableHttpClient client = HttpClientBuilder.create().build();
         HttpGet httpGet = new HttpGet(FIND_ALL_URL);
@@ -170,16 +172,18 @@ public class ApplicationClient {
         HttpResponse response = client.execute(httpGet);
 
         status = response.getStatusLine().getStatusCode();
-        resultList = new ArrayList<>();
 
         if (status == 200) {
             String responsejson = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
-            List<MyUser> list = gson.fromJson(responsejson, List.class);
-            resultList = list;
+            List<MyUser> list = gson.fromJson(responsejson, new TypeToken<ArrayList<MyUser>>() {
+            }.getType());
+            return list;
         } else if (status == 500) {
             result = "Login Expired";
+        } else if (status == 400) {
+            result = "NOT FOUND";
         }
-
+        return null;
     }
 
     public void delete(long id) throws Exception {
@@ -226,22 +230,6 @@ public class ApplicationClient {
 
     public void setToken(Token token) {
         this.token = token;
-    }
-
-    public List<MyUser> getResultList() {
-        return resultList;
-    }
-
-    public void setResultList(List<MyUser> resultList) {
-        this.resultList = resultList;
-    }
-
-    public MyUser getObjResult() {
-        return objResult;
-    }
-
-    public void setObjResult(MyUser objResult) {
-        this.objResult = objResult;
     }
 
 }
