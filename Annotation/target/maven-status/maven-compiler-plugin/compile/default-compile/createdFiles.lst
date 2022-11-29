@@ -1,0 +1,4 @@
+com\standart\annotation\Test.class
+com\standart\annotation\Annotation.class
+com\standart\annotation\ClassOnlyAnnotation.class
+com\standart\annotation\MyAnnotation.class
